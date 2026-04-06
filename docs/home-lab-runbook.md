@@ -335,9 +335,9 @@ Current private-tracker targets include TorrentLeech, FileList, IPTorrents, Alph
 - media mount: `/mnt/das/data`
 - compatibility symlink: `/mnt/nas/data`
 
-## 16. What should be kept up to date
+## 16. Documentation maintenance rule
 
-This file should be updated whenever any of these change:
+This file and the sanitized GitHub repo must be updated whenever any of these change:
 - storage layout
 - mountpoints
 - RAID/encryption scheme
@@ -349,6 +349,15 @@ This file should be updated whenever any of these change:
 - indexers
 - health-check scripts/cron
 - recovery procedures
+- troubleshooting lessons learned from real incidents
+
+Authoritative sanitized repo:
+- `https://github.com/cass-clearly/home-lab-docs`
+
+Expectation:
+- if the setup changes, update the docs
+- if something breaks, add troubleshooting notes
+- if recovery steps get clearer, write them down here and push the repo
 
 ## 17. One-paragraph summary
 

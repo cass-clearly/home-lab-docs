@@ -1,0 +1,26 @@
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Denver
+      - WEBUI_PORT=8081
+      - TORRENTING_PORT=6881
+    volumes:
+      - /home/cass/downloads/qbittorrent/config:/config
+      - /mnt/das/data/completed:/downloads
+      - /mnt/das/data/incomplete:/incomplete
+    ports:
+      - 8081:8081
+      - 6881:6881
+      - 6881:6881/udp
+    networks:
+      - arrstack
+    restart: unless-stopped
+
+networks:
+  arrstack:
+    external: true
+    name: arr-stack_default

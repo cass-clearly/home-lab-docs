@@ -1,0 +1,355 @@
+# Home Lab Runbook
+
+Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
+
+Last updated: 2026-04-06
+
+## 1. What this setup is
+
+This is a Linux-hosted media stack running on the ai-server, with storage on a directly attached DAS.
+
+Core pieces:
+- **Host:** ai-server (Linux)
+- **Storage:** 2-disk **Linux mdadm RAID1** on the DAS
+- **Encryption:** **LUKS** on top of the RAID
+- **Filesystem:** **ext4**
+- **Primary mount:** `/mnt/das/data`
+- **Compatibility symlink:** `/mnt/nas/data -> /mnt/das/data`
+- **Media apps:** Plex, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent
+- **Container platform:** Docker Compose
+
+Mental model:
+- disks -> mdadm RAID1 -> LUKS -> ext4 -> mounted media folders
+- qBittorrent downloads
+- Sonarr/Radarr decide what to grab/import
+- Prowlarr provides indexers to Sonarr/Radarr
+- Plex serves the finished library
+
+## 2. Storage layout
+
+### Physical/logical structure
+Current array:
+- **RAID device:** `/dev/md0`
+- **Encrypted mapper:** `/dev/mapper/nas_crypt`
+- **Mountpoint:** `/mnt/das/data`
+
+Current storage design:
+1. two disks presented by the DAS
+2. Linux **mdadm RAID1** mirror built from disk partitions
+3. **LUKS** encryption on top of the RAID
+4. **ext4** filesystem inside the unlocked mapper
+5. filesystem mounted at `/mnt/das/data`
+
+### Capacity
+Usable size is capped to the smaller RAID member, so the current usable volume is about **5.5 TB**.
+
+### Important directories
+Under `/mnt/das/data`:
+- `completed/`
+- `incomplete/`
+- `Movies/`
+- `TV Shows/`
+- `Kids TV/`
+
+### Why this matters
+This is **Linux software RAID**, not enclosure RAID.
+That means:
+- recovery is easiest on **Linux**
+- macOS will **not** just mount a single disk as a normal volume
+- a recovery path exists, but it expects `mdadm` + `cryptsetup` + ext4 support
+
+## 3. Encryption
+
+Encryption is mandatory in this setup.
+
+### How it works
+- The RAID device is encrypted with **LUKS**.
+- It unlocks to `/dev/mapper/nas_crypt`.
+- ext4 lives inside that unlocked device.
+
+### Recovery secret
+The recovery passphrase is stored in the team secret manager. Do not store it in Git.
+
+### Auto-unlock
+Auto-unlock is configured via a keyfile on the host.
+That means normal boots should assemble the array, unlock the LUKS device, and mount `/mnt/das/data` automatically.
+
+## 4. Services and where they live
+
+### qBittorrent
+Purpose:
+- torrent download client
+
+Compose file:
+- `/home/cass/services/qbittorrent/docker-compose.yml`
+
+Config path:
+- `/home/cass/downloads/qbittorrent/config`
+
+Important details:
+- attached to Docker network: `arr-stack_default`
+- Web UI on LAN: `http://192.168.5.204:8081`
+- internal host for Arr apps: `qbittorrent:8081`
+- current torrent listen port: **6881 TCP/UDP**
+
+### Arr stack
+Compose file:
+- `/opt/compose/arr-stack/docker-compose.yml`
+
+Apps in the stack:
+- **Sonarr**: TV automation
+- **Radarr**: movie automation
+- **Prowlarr**: indexers/search aggregation
+- **Bazarr**: subtitles
+- **Plex**: media server
+
+### Plex database
+Used to rebuild library inventory:
+- `/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db`
+
+## 5. Media paths and app behavior
+
+### Sonarr
+Root folders:
+- `/tv`
+- `/kids-tv`
+
+These map into the DAS-backed media folders.
+
+### Radarr
+Root folder:
+- `/movies`
+
+### qBittorrent categories
+Used so Sonarr/Radarr can track and import correctly:
+- Sonarr -> `sonarr`
+- Radarr -> `radarr`
+
+### Download flow
+1. Sonarr/Radarr search via Prowlarr indexers
+2. winning release is sent to qBittorrent
+3. qB downloads into completed/incomplete paths
+4. Sonarr/Radarr import into final library paths
+5. Plex sees imported files in the media library
+
+## 6. Quality/profile decisions
+
+### Shared high-level rule
+The standard quality profile is **Ultra-HD**, but it has been redefined to mean:
+- prefer **2160p**
+- fallback to **1080p**
+- fallback to **720p**
+- reject anything below **720p**
+- upgrades allowed
+
+### Sonarr
+All series were assigned to **Ultra-HD**.
+Current series count at the time of writing: about **57**.
+
+Sonarr also has custom-format scoring to bias toward:
+- Plex-friendly WEB releases
+- Plex-friendly audio
+- smaller files
+- not giant releases
+
+Notably, **no TV-specific 3D rule** was added.
+
+### Radarr
+All movies were assigned to **Ultra-HD**.
+Current movie count at the time of writing: about **230**.
+
+Radarr custom-format scoring on Ultra-HD:
+- **No 3D** = `-10000`
+- **Prefer Under 30 GB** = `+50`
+- **Penalize Over 30 GB** = `-75`
+- **Prefer Plex-Friendly WEB** = `+35`
+- **Prefer Plex-Friendly Audio** = `+20`
+- **Penalize Plex-Unfriendly Disc/ISO** = `-100`
+
+Meaning:
+- prefer 4K when sane
+- avoid 3D
+- avoid ISO/full-disc garbage
+- prefer WEB and normal audio for Plex clients
+- discourage massive movie files where possible
+
+## 7. Current indexers
+
+Current enabled Prowlarr indexers:
+- 1337x
+- EZTV
+- LimeTorrents
+- Nyaa.si
+- Shana Project
+- SubsPlease
+- The Pirate Bay
+- Tokyo Toshokan
+- TorrentGalaxy
+
+Disabled as low-value for TV:
+- YTS
+
+Notes:
+- anime-related sources are mainly for anime/Japanese content
+- general English TV/movie usefulness mainly comes from 1337x, EZTV, LimeTorrents, TPB, TorrentGalaxy
+- better long-tail coverage would likely come from private trackers
+
+## 8. qBittorrent tuning
+
+Current queueing behavior:
+- queueing enabled: `true`
+- **max active downloads:** `5`
+- **max active torrents:** `6`
+- **max active uploads:** `1`
+
+This was intentionally limited to avoid flooding the box with too many active grabs at once.
+
+### Why speeds may fluctuate
+If all active torrents rise/fall together, likely shared bottlenecks are:
+- network path instability
+- storage IO / USB / RAID / encryption overhead
+- qB global pacing / connection behavior
+
+If one torrent behaves differently from another, that is more likely peer quality.
+
+## 9. Networking
+
+### qB inbound port
+For better torrent connectivity, the host should forward:
+- **6881 TCP** -> ai-server (`192.168.5.204`)
+- **6881 UDP** -> ai-server (`192.168.5.204`)
+
+Do **not** forward admin UIs publicly:
+- 8081 (qB Web UI)
+- 8989 (Sonarr)
+- 7878 (Radarr)
+- 9696 (Prowlarr)
+
+Those should remain LAN-only.
+
+### Web UI access
+qBittorrent Web UI:
+- `http://192.168.5.204:8081`
+
+## 10. Health monitoring
+
+Health-check script:
+- `/usr/local/sbin/check-nas-health`
+
+Cron:
+- `*/30 * * * * /usr/local/sbin/check-nas-health`
+
+Purpose:
+- check RAID/storage health regularly
+- surface issues before they become data-loss problems
+
+## 11. How to verify the stack after a reboot or move
+
+After any shutdown, reboot, or physical move, verify in this order:
+
+1. **RAID assembled**
+   - check `/dev/md0`
+2. **LUKS unlocked**
+   - check `/dev/mapper/nas_crypt`
+3. **filesystem mounted**
+   - confirm `/mnt/das/data`
+4. **containers are up**
+   - qBittorrent, Sonarr, Radarr, Prowlarr, Bazarr, Plex
+5. **qB Web UI loads**
+   - `http://192.168.5.204:8081`
+6. **Sonarr/Radarr/Prowlarr healthy**
+7. **downloads resume**
+8. **imports continue into Movies / TV Shows**
+
+If the DAS does not come up cleanly, the media stack may start but behave badly because `/mnt/das/data` is the critical dependency.
+
+## 12. Recovery / migration notes
+
+### If the ai-server dies
+Best recovery path:
+1. move the DAS disks to another **Linux** machine
+2. install/use:
+   - `mdadm`
+   - `cryptsetup`
+   - ext4 support
+3. assemble the RAID
+4. unlock the LUKS device using the key/passphrase
+5. mount the filesystem
+6. restore Docker Compose services/configs
+
+### If only one RAID member survives
+Because this is RAID1, a single surviving member should usually be enough to recover the volume on Linux, using mdadm + LUKS tools.
+
+### If you plug a member into a Mac
+Do **not** expect Finder to show a normal volume.
+macOS does not natively understand this stack as a plug-and-play disk.
+
+## 13. Known issues / caveats
+
+### qB API oddities
+On this qB build, some automation endpoints were unreliable:
+- pause/resume/force-start attempts returned 404 from scripts in earlier testing
+- listing, delete, priority changes, and preference updates worked
+
+Practical implication:
+- some queue hygiene may be easier in the UI than via automation
+
+### Radarr bulk search bug
+Known error path:
+- `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
+
+Per-movie searches do work.
+
+### qB / Sonarr handoff edge cases
+At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
+This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
+
+## 14. Operational habits that matter
+
+### For oversized movie grabs
+Best cleanup flow:
+1. remove the oversized torrent from qB
+2. clear the associated grab/queue state in Radarr if needed
+3. re-run search
+4. let Radarr pick again under the current scoring rules
+
+Do not assume deleting from qB alone is enough.
+
+### For indexers
+More indexers is not always better.
+Prefer a smaller set of decent sources over a huge pile of junk.
+Private trackers are likely the next meaningful quality step.
+
+### For tracker discovery
+A recurring reminder exists to check for private tracker openings/invites.
+Current private-tracker targets include TorrentLeech, FileList, IPTorrents, AlphaRatio, and PrivateHD / BLU.
+
+## 15. File locations worth knowing
+
+- qB compose: `/home/cass/services/qbittorrent/docker-compose.yml`
+- qB config: `/home/cass/downloads/qbittorrent/config`
+- Arr compose: `/opt/compose/arr-stack/docker-compose.yml`
+- Prowlarr DB: `/opt/compose/arr-stack/prowlarr/prowlarr.db`
+- Plex DB: `/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db`
+- health script: `/usr/local/sbin/check-nas-health`
+- media mount: `/mnt/das/data`
+- compatibility symlink: `/mnt/nas/data`
+
+## 16. What should be kept up to date
+
+This file should be updated whenever any of these change:
+- storage layout
+- mountpoints
+- RAID/encryption scheme
+- Docker compose locations
+- qB listen/web ports
+- Sonarr/Radarr root folders
+- quality profile strategy
+- custom-format scoring
+- indexers
+- health-check scripts/cron
+- recovery procedures
+
+## 17. One-paragraph summary
+
+This home lab is a Linux media stack running on ai-server with Docker-hosted Plex/Sonarr/Radarr/Prowlarr/Bazarr/qBittorrent, backed by a directly attached two-disk mdadm RAID1 array encrypted with LUKS and mounted at `/mnt/das/data`. qBittorrent handles downloads, Sonarr/Radarr automate grabs and imports, Prowlarr feeds indexers, Plex serves the final library, and the system is tuned to prefer 4K with sane fallbacks and Plex-friendly formats while avoiding 3D, disc/ISO junk, and oversized movie releases where possible.

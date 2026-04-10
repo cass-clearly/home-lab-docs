@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-04-06
+Last updated: 2026-04-10
 
 ## 1. What this setup is
 
@@ -303,6 +303,32 @@ Per-movie searches do work.
 ### qB / Sonarr handoff edge cases
 At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
 This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
+
+### 2026-04 completed-folder cleanup lessons
+When reconciling stranded payloads from `/mnt/das/data/completed`:
+- prefer `rsync --ignore-existing` into the final library path first, then verify file counts before treating the staging copy as redundant
+- if Sonarr/Radarr already have the title, run a targeted rescan/refresh after manual copies so app state catches up with disk state
+- dot-prefixed leftovers and `.<name>.mkv.*` scratch files are safe to remove only after the corresponding final media file exists cleanly
+- some bad grabs land as **txt-only** release folders (for example MgB-style movie folders containing only `Subtitle,info/Downloaded from 1337x.to.txt` and no media file); those can be treated as stale garbage and moved to a recoverable trash folder instead of leaving them in `completed/`
+- for Kids TV migrations, copying the already-verified library payload into `/mnt/das/data/Kids TV` can be faster and safer than re-importing from a messy completed release tree
+
+### 2026-04 RAID member replacement / rebuild incident
+Observed state during the incident:
+- `/proc/mdstat` showed `/dev/md0` in degraded recovery state (`[2/1] [_U]`)
+- array recovery progressed slowly over many hours
+- the correct verification commands were:
+  - `cat /proc/mdstat`
+  - `mdadm --detail /dev/md0`
+
+What “healthy again” looks like:
+- mdadm reports the array as `clean`
+- both members are active
+- `/proc/mdstat` shows `[UU]`
+
+Operational rule:
+- while rebuild is in progress, do not assume the array is failed if one member is missing from the active set
+- treat it as an active rebuild unless progress stalls or mdadm reports a failed member
+- keep the recurring rebuild-status check running until md0 is fully clean with both members active, then remove that temporary cron
 
 ## 14. Operational habits that matter
 

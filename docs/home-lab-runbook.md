@@ -15,7 +15,7 @@ Core pieces:
 - **Filesystem:** **ext4**
 - **Primary mount:** `/mnt/das/data`
 - **Compatibility symlink:** `/mnt/nas/data -> /mnt/das/data`
-- **Media apps:** Plex, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent
+- **Media apps:** Plex, Seerr, Sonarr, Radarr, Prowlarr, Bazarr, qBittorrent
 - **Container platform:** Docker Compose
 
 Mental model:
@@ -109,11 +109,26 @@ Compose file:
 - `/opt/compose/arr-stack/docker-compose.yml`
 
 Apps in the stack:
+- **Seerr**: request and discovery front-end for Plex/Sonarr/Radarr
 - **Sonarr**: TV automation
 - **Radarr**: movie automation
 - **Prowlarr**: indexers/search aggregation
 - **Bazarr**: subtitles
 - **Plex**: media server
+
+### Seerr
+- Image: `seerr/seerr:latest`
+- Config path: `/opt/compose/arr-stack/seerr`
+- Web UI: `http://192.168.5.204:5055`
+- Internal app URL: `http://192.168.5.204:5055`
+- Bound Plex server: `Main Library` via `host.docker.internal:32400`
+- Enabled Plex libraries: `Movies`, `TV Shows`, `Kids TV`
+- Bound Radarr default: `Ultra-HD` -> `/data/media/Movies`
+- Bound Sonarr default: `Ultra-HD` -> `/data/media/TV Shows`
+- Notes:
+  - Seerr was installed on 2026-04-12 using the official Docker Hub image after confirming the current published image name from the Seerr project README.
+  - `host.docker.internal:host-gateway` is set so the Seerr container can reach host Plex cleanly.
+  - Seerr was initialized by authenticating against the existing Plex account on this box, then wiring Plex/Sonarr/Radarr through the Seerr API.
 
 ### Plex database
 Used to rebuild library inventory:
@@ -260,12 +275,17 @@ Do **not** forward admin UIs publicly:
 - 8989 (Sonarr)
 - 7878 (Radarr)
 - 9696 (Prowlarr)
+- 5055 (Seerr)
 
-Those should remain LAN-only.
+Those should remain LAN-only unless intentionally reverse-proxied behind auth.
 
 ### Web UI access
 qBittorrent Web UI:
 - `http://192.168.5.204:8081`
+
+Seerr:
+- `http://192.168.5.204:5055`
+- Works well in a phone browser, and on iPhone/Android you can add it to the home screen as a pseudo-app.
 
 ## 10. Health monitoring
 

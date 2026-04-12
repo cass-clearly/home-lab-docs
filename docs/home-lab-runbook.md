@@ -173,8 +173,11 @@ Current series count at the time of writing: about **57**.
 Sonarr also has custom-format scoring to bias toward:
 - Plex-friendly WEB releases
 - Plex-friendly audio
+- **English audio when available**
 - smaller files
 - not giant releases
+
+The English-audio rule is a **preference, not a hard requirement**. Non-English releases can still be accepted when no English-audio option exists.
 
 Notably, **no TV-specific 3D rule** was added.
 
@@ -184,20 +187,25 @@ Current movie count at the time of writing: about **230**.
 
 Radarr custom-format scoring on Ultra-HD is intentionally biased toward compressed, Plex-friendlier releases:
 - **No 3D** = `-10000`
+- **Prefer Under 15 GB** = `+75`
 - **Prefer Under 30 GB** = `+50`
 - **Penalize Over 30 GB** = `-75`
 - **Prefer Plex-Friendly WEB** = `+40`
 - **Prefer Plex-Friendly Audio** = `+20`
 - **Prefer HEVC/x265** = `+25`
+- **Prefer English Audio** = `+100`
 - **Penalize Plex-Unfriendly Disc/ISO** = `-175`
 - **Penalize Remux** = `-250`
 
-The same bias was also applied to the 1080p-oriented movie profiles.
+The same general bias was also applied to the 1080p-oriented movie profiles, with **Prefer Under 5 GB** = `+75` and **Prefer English Audio** = `+100`.
+
+Radarr quality-profile language was changed from **Original** to **Any**, so English audio is now a strong preference rather than a hard original-language bias.
 
 Meaning:
 - prefer 4K when sane
 - prefer compressed WEB / HEVC encodes over giant disc-like releases
 - strongly discourage remuxes and full-disc/ISO garbage
+- prefer English audio when available, but still allow foreign-language-only titles as fallback
 - prefer normal client-friendly audio where possible
 - discourage massive movie files where possible
 

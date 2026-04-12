@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11
 
 ## 1. What this setup is
 
@@ -44,12 +44,21 @@ Current storage design:
 Usable size is capped to the smaller RAID member, so the current usable volume is about **5.5 TB**.
 
 ### Important directories
-Under `/mnt/das/data`:
-- `completed/`
-- `incomplete/`
-- `Movies/`
-- `TV Shows/`
-- `Kids TV/`
+Current canonical layout under `/mnt/das/data`:
+- `torrents/incomplete/`
+- `torrents/complete/`
+- `media/Movies/`
+- `media/TV Shows/`
+- `media/Kids TV/`
+
+Compatibility symlinks are intentionally still present:
+- `/mnt/das/data/incomplete -> /mnt/das/data/torrents/incomplete`
+- `/mnt/das/data/completed -> /mnt/das/data/torrents/complete`
+- `/mnt/das/data/Movies -> /mnt/das/data/media/Movies`
+- `/mnt/das/data/TV Shows -> /mnt/das/data/media/TV Shows`
+- `/mnt/das/data/Kids TV -> /mnt/das/data/media/Kids TV`
+
+The symlinks are there to preserve continuity for existing paths and recovery scripts while the apps move to the `/data/...` model.
 
 ### Why this matters
 This is **Linux software RAID**, not enclosure RAID.
@@ -91,6 +100,9 @@ Important details:
 - Web UI on LAN: `http://192.168.5.204:8081`
 - internal host for Arr apps: `qbittorrent:8081`
 - current torrent listen port: **6881 TCP/UDP**
+- container now mounts the whole DAS root at `/data`
+- qB save path now points at `/data/torrents/complete`
+- qB temp path now points at `/data/torrents/incomplete`
 
 ### Arr stack
 Compose file:
@@ -110,15 +122,17 @@ Used to rebuild library inventory:
 ## 5. Media paths and app behavior
 
 ### Sonarr
-Root folders:
-- `/tv`
-- `/kids-tv`
+Current app-level root folders:
+- `/data/media/TV Shows`
+- `/data/media/Kids TV`
 
-These map into the DAS-backed media folders.
+Legacy compatibility mounts still exist in the container (`/tv`, `/kids-tv`), but the app records themselves were moved to `/data/media/...` on 2026-04-11.
 
 ### Radarr
-Root folder:
-- `/movies`
+Current app-level root folder:
+- `/data/media/Movies`
+
+Legacy compatibility mount still exists in the container (`/movies`), but the app records themselves were moved to `/data/media/...` on 2026-04-11.
 
 ### qBittorrent categories
 Used so Sonarr/Radarr can track and import correctly:
@@ -128,9 +142,19 @@ Used so Sonarr/Radarr can track and import correctly:
 ### Download flow
 1. Sonarr/Radarr search via Prowlarr indexers
 2. winning release is sent to qBittorrent
-3. qB downloads into completed/incomplete paths
+3. qB downloads into `/data/torrents/incomplete` then promotes into `/data/torrents/complete`
 4. Sonarr/Radarr import into final library paths
 5. Plex sees imported files in the media library
+
+### Why the `/data` topology matters
+This stack was rebuilt away from the older split-path layout after qB/Arr state became inconsistent.
+
+Current best practice on this box is:
+- every media app mounts `/mnt/das/data` as `/data`
+- torrent staging lives under `/data/torrents/...`
+- final libraries live under `/data/media/...`
+
+This preserves one coherent filesystem tree across qB, Sonarr, and Radarr and avoids the old class of “downloaded here, imported there, tracker state points somewhere else” bugs.
 
 ## 6. Quality/profile decisions
 
@@ -300,17 +324,37 @@ Known error path:
 
 Per-movie searches do work.
 
-### qB / Sonarr handoff edge cases
+### qB / Sonarr / Radarr handoff edge cases
 At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
 This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
+
+### 2026-04 preventive audit findings
+Current audit highlights:
+- **Sonarr and Radarr currently report qBittorrent authentication failures**. This is the most important live issue to fix before trusting new automated grabs.
+- shared container-visible paths are still the correct model here:
+  - qB completed: `/downloads`
+  - Sonarr libraries: `/tv` and `/kids-tv`
+  - Radarr library: `/movies`
+- `Remote Path Mapping` is correctly empty in both Sonarr and Radarr for this setup.
+- `Completed Download Handling` is enabled in both Sonarr and Radarr.
+- qB categories are correctly split:
+  - Sonarr -> `sonarr`
+  - Radarr -> `radarr`
+
+Operational rule:
+- if Sonarr/Radarr health shows `Unable to communicate with qBittorrent. Failed to authenticate with qBittorrent.`, treat that as a real blocker for future automation and fix it immediately before relying on new grabs/imports.
 
 ### 2026-04 completed-folder cleanup lessons
 When reconciling stranded payloads from `/mnt/das/data/completed`:
 - prefer `rsync --ignore-existing` into the final library path first, then verify file counts before treating the staging copy as redundant
 - if Sonarr/Radarr already have the title, run a targeted rescan/refresh after manual copies so app state catches up with disk state
+- when orphaned manual import returns zero candidates but the title/episode/movie mapping is known-good, a reliable fallback is to place the file directly into the canonical final library path and rescan
+- use **container-visible paths** in Arr API/manual-import workflows (`/downloads`, `/tv`, `/kids-tv`, `/movies`), not host paths like `/mnt/das/data/...`
 - dot-prefixed leftovers and `.<name>.mkv.*` scratch files are safe to remove only after the corresponding final media file exists cleanly
 - some bad grabs land as **txt-only** release folders (for example MgB-style movie folders containing only `Subtitle,info/Downloaded from 1337x.to.txt` and no media file); those can be treated as stale garbage and moved to a recoverable trash folder instead of leaving them in `completed/`
+- `completed/` should be treated as a staging area, not a long-term archive; once files are safely landed in the final library, clear redundant completed copies conservatively
 - for Kids TV migrations, copying the already-verified library payload into `/mnt/das/data/Kids TV` can be faster and safer than re-importing from a messy completed release tree
+- broad/folder-wide Sonarr manual-import calls on historical orphan packs were brittle; per-file or small targeted handling was safer until canonical placement + rescan became the better fallback
 
 ### 2026-04 RAID member replacement / rebuild incident
 Observed state during the incident:
@@ -345,6 +389,24 @@ Do not assume deleting from qB alone is enough.
 More indexers is not always better.
 Prefer a smaller set of decent sources over a huge pile of junk.
 Private trackers are likely the next meaningful quality step.
+
+### For Sonarr / Radarr path hygiene
+Preventive habit:
+- series and movie paths stored in Sonarr/Radarr should point to real directories on disk
+- missing paths do not always break day-to-day imports, but they can break manual import and make recovery work much harder
+- after bulk library rebuilds or root-folder changes, run a quick audit for:
+  - missing Sonarr series paths
+  - missing Radarr movie paths
+  - unexpected unmapped folders reported under root folders
+
+### For qB authentication drift
+If qB credentials are changed:
+1. update the qB Web UI password
+2. update the stored secret source of truth
+3. immediately update both Sonarr and Radarr download-client settings
+4. confirm Arr health is clean again
+
+Do not assume fixing qB alone is enough. Sonarr and Radarr can silently remain broken until their stored credentials are updated too.
 
 ### For tracker discovery
 A recurring reminder exists to check for private tracker openings/invites.

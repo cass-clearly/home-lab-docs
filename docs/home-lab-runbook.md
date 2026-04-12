@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-04-11
+Last updated: 2026-04-12
 
 ## 1. What this setup is
 
@@ -182,19 +182,23 @@ Notably, **no TV-specific 3D rule** was added.
 All movies were assigned to **Ultra-HD**.
 Current movie count at the time of writing: about **230**.
 
-Radarr custom-format scoring on Ultra-HD:
+Radarr custom-format scoring on Ultra-HD is intentionally biased toward compressed, Plex-friendlier releases:
 - **No 3D** = `-10000`
 - **Prefer Under 30 GB** = `+50`
 - **Penalize Over 30 GB** = `-75`
-- **Prefer Plex-Friendly WEB** = `+35`
+- **Prefer Plex-Friendly WEB** = `+40`
 - **Prefer Plex-Friendly Audio** = `+20`
-- **Penalize Plex-Unfriendly Disc/ISO** = `-100`
+- **Prefer HEVC/x265** = `+25`
+- **Penalize Plex-Unfriendly Disc/ISO** = `-175`
+- **Penalize Remux** = `-250`
+
+The same bias was also applied to the 1080p-oriented movie profiles.
 
 Meaning:
 - prefer 4K when sane
-- avoid 3D
-- avoid ISO/full-disc garbage
-- prefer WEB and normal audio for Plex clients
+- prefer compressed WEB / HEVC encodes over giant disc-like releases
+- strongly discourage remuxes and full-disc/ISO garbage
+- prefer normal client-friendly audio where possible
 - discourage massive movie files where possible
 
 ## 7. Current indexers

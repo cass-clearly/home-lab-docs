@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-04-12
+Last updated: 2026-04-16
 
 ## 1. What this setup is
 
@@ -77,7 +77,8 @@ Encryption is mandatory in this setup.
 - ext4 lives inside that unlocked device.
 
 ### Recovery secret
-The recovery passphrase is stored in the team secret manager. Do not store it in Git.
+The recovery passphrase is stored in 1Password under:
+- **`AI Server NAS LUKS Recovery Passphrase`**
 
 ### Auto-unlock
 Auto-unlock is configured via a keyfile on the host.
@@ -263,6 +264,31 @@ If all active torrents rise/fall together, likely shared bottlenecks are:
 
 If one torrent behaves differently from another, that is more likely peer quality.
 
+### 2026-04 qB completion cleanup fix
+
+qB had this problematic combination:
+- `Session\GlobalMaxRatio=0`
+- `Session\ShareLimitAction=Stop`
+
+That means a torrent that finishes immediately hits the share limit and gets **stopped**, not removed. On this box that caused some finished torrents to sit in the qB list for hours even after the payload had already moved/imported cleanly.
+
+The fix applied on 2026-04-16 was:
+- keep `Session\GlobalMaxRatio=0`
+- change `Session\ShareLimitAction=Remove`
+
+Operational meaning:
+- completed torrents are still allowed to finish their move + completion hook
+- then qB removes the torrent from its list instead of leaving a stopped completed entry behind
+- content handling is left to the downstream app/import flow rather than qB lingering forever
+
+If this behavior regresses, the safe procedure is:
+1. stop the qB container
+2. edit `/home/cass/downloads/qbittorrent/config/qBittorrent/qBittorrent.conf`
+3. set `Session\ShareLimitAction=Remove`
+4. start the qB container again
+
+Important: patch the config **while the container is stopped**. If you edit it while qB is running, qB can write the old in-memory setting back out during shutdown and undo the change.
+
 ## 9. Networking
 
 ### qB inbound port
@@ -360,6 +386,13 @@ Per-movie searches do work.
 At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
 This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
 
+Separate from that, a torrent stuck at **99.8% to 99.9%** with:
+- no `completed_time`
+- incomplete-state payload still in `/mnt/das/data/torrents/incomplete`
+- `num_complete = 0`
+
+is usually a genuine swarm-availability problem, not a move/import problem. In that case qB is still missing the last piece and there may simply be no full seeder online.
+
 ### 2026-04 preventive audit findings
 Current audit highlights:
 - **Sonarr and Radarr currently report qBittorrent authentication failures**. This is the most important live issue to fix before trusting new automated grabs.
@@ -442,7 +475,12 @@ Do not assume fixing qB alone is enough. Sonarr and Radarr can silently remain b
 
 ### For tracker discovery
 A recurring reminder exists to check for private tracker openings/invites.
-Current private-tracker targets include TorrentLeech, FileList, IPTorrents, AlphaRatio, and PrivateHD / BLU.
+Current target trackers:
+- TorrentLeech
+- FileList
+- IPTorrents
+- AlphaRatio
+- PrivateHD / BLU
 
 ## 15. File locations worth knowing
 
@@ -455,9 +493,9 @@ Current private-tracker targets include TorrentLeech, FileList, IPTorrents, Alph
 - media mount: `/mnt/das/data`
 - compatibility symlink: `/mnt/nas/data`
 
-## 16. Documentation maintenance rule
+## 16. What should be kept up to date
 
-This file and the sanitized GitHub repo must be updated whenever any of these change:
+This file should be updated whenever any of these change:
 - storage layout
 - mountpoints
 - RAID/encryption scheme
@@ -469,15 +507,6 @@ This file and the sanitized GitHub repo must be updated whenever any of these ch
 - indexers
 - health-check scripts/cron
 - recovery procedures
-- troubleshooting lessons learned from real incidents
-
-Authoritative sanitized repo:
-- `https://github.com/cass-clearly/home-lab-docs`
-
-Expectation:
-- if the setup changes, update the docs
-- if something breaks, add troubleshooting notes
-- if recovery steps get clearer, write them down here and push the repo
 
 ## 17. One-paragraph summary
 

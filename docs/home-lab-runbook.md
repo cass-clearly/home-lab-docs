@@ -91,19 +91,22 @@ Purpose:
 - torrent download client
 
 Compose file:
-- `/home/cass/services/qbittorrent/docker-compose.yml`
+- primary/non-VPN: `/home/cass/services/qbittorrent/docker-compose.yml`
+- VPN test stack: `/home/cass/services/vpn-qb/docker-compose.yml`
 
 Config path:
 - `/home/cass/downloads/qbittorrent/config`
 
 Important details:
-- attached to Docker network: `arr-stack_default`
+- qB is normally reached by Arr at `qbittorrent:8081`
+- when using the VPN stack, the `wireguard-qb` container joins `arr-stack_default` with Docker alias `qbittorrent` so Sonarr/Radarr do not need a host change
 - Web UI on LAN: `http://192.168.5.204:8081`
-- internal host for Arr apps: `qbittorrent:8081`
 - current torrent listen port: **6881 TCP/UDP**
 - container now mounts the whole DAS root at `/data`
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`
+- current WireGuard client config lives at `/home/cass/services/vpn-qb/wireguard/wg_confs/wg0.conf`
+- LinuxServer WireGuard client mode does **not** tolerate `PostUp` / `PostDown` directives inside `wg0.conf`; if those lines are present, tunnel activation fails during `wg setconf`
 
 ### Arr stack
 Compose file:
@@ -395,7 +398,7 @@ is usually a genuine swarm-availability problem, not a move/import problem. In t
 
 ### 2026-04 preventive audit findings
 Current audit highlights:
-- **Sonarr and Radarr currently report qBittorrent authentication failures**. This is the most important live issue to fix before trusting new automated grabs.
+- qB can run either directly on `arr-stack_default` or behind the WireGuard namespace stack in `/home/cass/services/vpn-qb`.
 - shared container-visible paths are still the correct model here:
   - qB completed: `/downloads`
   - Sonarr libraries: `/tv` and `/kids-tv`
@@ -405,9 +408,10 @@ Current audit highlights:
 - qB categories are correctly split:
   - Sonarr -> `sonarr`
   - Radarr -> `radarr`
+- during the 2026-04-23 VPN retest, Arr connectivity was healthy again once the `qbittorrent` alias pointed at the WireGuard container and qB was restarted after the tunnel fix.
 
 Operational rule:
-- if Sonarr/Radarr health shows `Unable to communicate with qBittorrent. Failed to authenticate with qBittorrent.`, treat that as a real blocker for future automation and fix it immediately before relying on new grabs/imports.
+- if Sonarr/Radarr health shows `Unable to communicate with qBittorrent. Failed to authenticate with qBittorrent.` or `Connection refused (qbittorrent:8081)`, treat that as a real blocker for future automation and fix it immediately before relying on new grabs/imports.
 
 ### 2026-04 completed-folder cleanup lessons
 When reconciling stranded payloads from `/mnt/das/data/completed`:

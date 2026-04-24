@@ -106,7 +106,10 @@ Important details:
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`
 - current WireGuard client config lives at `/home/cass/services/vpn-qb/wireguard/wg_confs/wg0.conf`
-- LinuxServer WireGuard client mode does **not** tolerate `PostUp` / `PostDown` directives inside `wg0.conf`; if those lines are present, tunnel activation fails during `wg setconf`
+- LAN access to the qB Web UI depends on a persistent route override in `wg0.conf`:
+  - `PostUp = ip route add 192.168.5.0/24 via 172.22.0.1 dev eth0`
+  - `PostDown = ip route del 192.168.5.0/24 via 172.22.0.1 dev eth0`
+  - without that route, `http://192.168.5.204:8081` can time out even though `curl http://127.0.0.1:8081` still works locally on the host
 
 ### Arr stack
 Compose file:

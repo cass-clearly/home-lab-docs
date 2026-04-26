@@ -101,7 +101,8 @@ Important details:
 - qB is normally reached by Arr at `qbittorrent:8081`
 - when using the VPN stack, the `wireguard-qb` container joins `arr-stack_default` with Docker alias `qbittorrent` so Sonarr/Radarr do not need a host change
 - Web UI on LAN: `http://192.168.5.204:8081`
-- current torrent listen port: **6881 TCP/UDP**
+- qB's internal torrent listen port is **6881 TCP/UDP**, but on the VPN stack it is **not published on the host**
+- only the Web UI (`8081`) should be exposed on the host when qB is behind WireGuard
 - container now mounts the whole DAS root at `/data`
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`

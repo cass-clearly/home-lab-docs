@@ -103,6 +103,9 @@ Important details:
 - Web UI on LAN: `http://192.168.5.204:8081`
 - qB's internal torrent listen port is **6881 TCP/UDP**, but on the VPN stack it is **not published on the host**
 - only the Web UI (`8081`) should be exposed on the host when qB is behind WireGuard
+- qB is additionally bound to the WireGuard interface in config:
+  - `Connection\InterfaceName=wg0`
+  - `Connection\InterfaceAddress=10.101.142.47`
 - container now mounts the whole DAS root at `/data`
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`
@@ -114,7 +117,8 @@ Important details:
 - `wg0.conf` also carries a kill-switch on the VPN stack now:
   - allow replies to `172.22.0.0/16` (Docker bridge) and `192.168.0.0/16` (LAN) on `eth0`
   - reject other non-local traffic not going out `wg0` and not marked with WireGuard fwmark `51820`
-  - this was added after proving that an unexpected `wg0` link drop otherwise fell back to the Metronet IP
+  - reject all IPv6 egress with `ip6tables -I OUTPUT -j REJECT` and keep IPv6 disabled via container sysctls
+  - this was added after proving that an unexpected `wg0` link drop otherwise fell back to the Metronet IP; after the hardening, both an interface-loss test and an explicit `wg-quick down` test blocked egress instead of leaking to the home IP, while restore brought traffic back to the VPN IP
 
 ### Arr stack
 Compose file:

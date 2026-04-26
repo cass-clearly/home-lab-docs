@@ -108,9 +108,13 @@ Important details:
 - qB temp path now points at `/data/torrents/incomplete`
 - current WireGuard client config lives at `/home/cass/services/vpn-qb/wireguard/wg_confs/wg0.conf`
 - LAN access to the qB Web UI depends on a persistent route override in `wg0.conf`:
-  - `PostUp = ip route add 192.168.5.0/24 via 172.22.0.1 dev eth0`
-  - `PostDown = ip route del 192.168.5.0/24 via 172.22.0.1 dev eth0`
+  - `PostUp = ip route replace 192.168.0.0/16 via 172.22.0.1 dev eth0`
+  - `PostDown = ip route del 192.168.0.0/16 via 172.22.0.1 dev eth0 || true`
   - without that route, `http://192.168.5.204:8081` can time out even though `curl http://127.0.0.1:8081` still works locally on the host
+- `wg0.conf` also carries a kill-switch on the VPN stack now:
+  - allow replies to `172.22.0.0/16` (Docker bridge) and `192.168.0.0/16` (LAN) on `eth0`
+  - reject other non-local traffic not going out `wg0` and not marked with WireGuard fwmark `51820`
+  - this was added after proving that an unexpected `wg0` link drop otherwise fell back to the Metronet IP
 
 ### Arr stack
 Compose file:

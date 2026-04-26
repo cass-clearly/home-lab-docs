@@ -109,6 +109,10 @@ Important details:
 - container now mounts the whole DAS root at `/data`
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`
+- **critical permissions rule:** the qB container runs as UID/GID `1000:1000` (`abc:users` inside the container, `csalvato:csalvato` on the host). `/mnt/das/data/torrents/incomplete` must therefore be writable by host UID/GID `1000:1000` or qB will silently stall with `File error alert ... Permission denied` even when the VPN and trackers look healthy.
+- quick validation after storage or VPN changes:
+  - `sudo docker exec -u 1000:1000 qbittorrent sh -lc 'touch /data/torrents/incomplete/qb-write-test && rm /data/torrents/incomplete/qb-write-test'`
+  - if that fails, fix with `sudo chown -R 1000:1000 /mnt/das/data/torrents/incomplete`
 - current WireGuard client config lives at `/home/cass/services/vpn-qb/wireguard/wg_confs/wg0.conf`
 - LAN access to the qB Web UI depends on a persistent route override in `wg0.conf`:
   - `PostUp = ip route replace 192.168.0.0/16 via 172.22.0.1 dev eth0`

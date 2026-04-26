@@ -105,7 +105,7 @@ Important details:
 - only the Web UI (`8081`) should be exposed on the host when qB is behind WireGuard
 - qB is additionally bound to the WireGuard interface in config:
   - `Connection\InterfaceName=wg0`
-  - `Connection\InterfaceAddress=10.101.142.47`
+  - `Connection\InterfaceAddress=` (left blank so qB follows whatever VPN address the active `wg0.conf` assigns)
 - container now mounts the whole DAS root at `/data`
 - qB save path now points at `/data/torrents/complete`
 - qB temp path now points at `/data/torrents/incomplete`
@@ -421,6 +421,7 @@ Current audit highlights:
   - Sonarr -> `sonarr`
   - Radarr -> `radarr`
 - during the 2026-04-23 VPN retest, Arr connectivity was healthy again once the `qbittorrent` alias pointed at the WireGuard container and qB was restarted after the tunnel fix.
+- on 2026-04-26 the VPN stack was switched from the prior WireGuard peer to a Proton VPN free WireGuard config (`CA-FREE#19`); qB/Arr reachability stayed healthy, and Proton free still means **no port forwarding**, so keep `PortForwardingEnabled=false` in qB unless the provider plan changes.
 
 Operational rule:
 - if Sonarr/Radarr health shows `Unable to communicate with qBittorrent. Failed to authenticate with qBittorrent.` or `Connection refused (qbittorrent:8081)`, treat that as a real blocker for future automation and fix it immediately before relying on new grabs/imports.

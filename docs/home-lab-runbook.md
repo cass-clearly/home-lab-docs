@@ -432,6 +432,9 @@ Current audit highlights:
   - public egress changed to `184.75.208.170`
   - AirVPN remote port forwarding was enabled on **55099/TCP+UDP**
   - qB listened on `10.152.128.205:55099` for both TCP and UDP while remaining bound to `wg0`
+- on 2026-05-02 a follow-up optimization pass moved the stack from the generic America profile to the **Torcular** AirVPN server in **Denver, Colorado** (`Endpoint = 198.54.128.117:1637`) to improve locality/throughput without weakening privacy.
+  - verified public egress after the change: `198.54.128.139`
+  - repeated fail-closed test still passed: bringing `wg0` down blocked Internet egress from the qB namespace until the tunnel came back
 
 Operational rule:
 - if Sonarr/Radarr health shows `Unable to communicate with qBittorrent. Failed to authenticate with qBittorrent.` or `Connection refused (qbittorrent:8081)`, treat that as a real blocker for future automation and fix it immediately before relying on new grabs/imports.

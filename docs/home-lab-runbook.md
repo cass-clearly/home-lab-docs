@@ -307,26 +307,32 @@ Observed symptom pattern:
 - manual import/scan succeeds later
 - `torrents/complete` accumulates stranded folders/files
 
-Fix applied on 2026-05-03:
+Fix applied on 2026-05-03, then refined on 2026-05-03 after Chris asked for downloads to stop seeding and stop lingering as library+completed twins:
 - set `Session\GlobalMaxRatio=-1`
-- set `Session\GlobalMaxSeedingMinutes=5`
-- keep `Session\ShareLimitAction=Remove`
+- set `Session\GlobalMaxSeedingMinutes=1`
+- set `Session\ShareLimitAction=Stop`
+- set Sonarr `copyUsingHardlinks=false`
+- set Radarr `copyUsingHardlinks=false`
 
 Operational meaning now:
-- completed torrents remain in qB for up to ~5 minutes after completion
-- Sonarr/Radarr have enough time to import/move them
-- qB still cleans up automatically afterward instead of leaving completed entries forever
+- qB keeps a very short post-complete grace window (~1 minute) so Arr still has time to import cleanly
+- Arr imports by real copy/move behavior instead of hardlinking into the library
+- qB stops seeding instead of auto-removing the torrent out from under Arr
+- after import, the desired steady state is library file only; if a stopped completed payload lingers, that is cleanup drift worth checking
 
-Verification after the fix:
-- qB prefs show `max_ratio_enabled=false`
-- qB prefs show `max_seeding_time_enabled=true` with `max_seeding_time=5`
+Verification after the refinement:
+- qB config shows `Session\GlobalMaxRatio=-1`
+- qB config shows `Session\GlobalMaxSeedingMinutes=1`
+- qB config shows `Session\ShareLimitAction=Stop`
+- Sonarr/Radarr media-management config shows `copyUsingHardlinks=false`
 - stranded backlog in `torrents/complete` was manually cleared/imported on 2026-05-03
 
 If this behavior regresses, check these first:
 1. `Session\GlobalMaxRatio` is **not** `0`
-2. `Session\GlobalMaxSeedingMinutes` is set (currently `5`)
-3. `Session\ShareLimitAction=Remove`
-4. Sonarr/Radarr still have completed download handling enabled
+2. `Session\GlobalMaxSeedingMinutes` is set (currently `1`)
+3. `Session\ShareLimitAction=Stop`
+4. Sonarr/Radarr media management still has `copyUsingHardlinks=false`
+5. Sonarr/Radarr still have completed download handling enabled
 
 Important: if you edit qB config by hand, prefer doing it with qB stopped; otherwise qB can write its in-memory settings back during shutdown and undo the change.
 

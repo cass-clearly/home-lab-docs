@@ -284,30 +284,51 @@ If all active torrents rise/fall together, likely shared bottlenecks are:
 
 If one torrent behaves differently from another, that is more likely peer quality.
 
-### 2026-04 qB completion cleanup fix
+### 2026-04 / 2026-05 qB completion cleanup behavior
 
-qB had this problematic combination:
+First we had this problematic combination:
 - `Session\GlobalMaxRatio=0`
 - `Session\ShareLimitAction=Stop`
 
-That means a torrent that finishes immediately hits the share limit and gets **stopped**, not removed. On this box that caused some finished torrents to sit in the qB list for hours even after the payload had already moved/imported cleanly.
+That made a torrent hit its share limit immediately on completion and get **stopped**, which left finished items cluttering qB for hours.
 
-The fix applied on 2026-04-16 was:
-- keep `Session\GlobalMaxRatio=0`
-- change `Session\ShareLimitAction=Remove`
+On 2026-04-16 that was changed to:
+- `Session\GlobalMaxRatio=0`
+- `Session\ShareLimitAction=Remove`
 
-Operational meaning:
-- completed torrents are still allowed to finish their move + completion hook
-- then qB removes the torrent from its list instead of leaving a stopped completed entry behind
-- content handling is left to the downstream app/import flow rather than qB lingering forever
+That cleaned up the qB list, but it created a worse side effect discovered on 2026-05-03:
+- a torrent with ratio limit `0` and action `Remove` is removed from qB essentially **immediately when it completes**
+- Sonarr/Radarr often lose the completed-download context before their import pass runs
+- result: payloads pile up in `/mnt/das/data/torrents/complete` and never auto-move into the library
 
-If this behavior regresses, the safe procedure is:
-1. stop the qB container
-2. edit `/home/cass/downloads/qbittorrent/config/qBittorrent/qBittorrent.conf`
-3. set `Session\ShareLimitAction=Remove`
-4. start the qB container again
+Observed symptom pattern:
+- Sonarr/Radarr parsing sees the release while downloading
+- qB no longer has the torrent in its active list once complete
+- manual import/scan succeeds later
+- `torrents/complete` accumulates stranded folders/files
 
-Important: patch the config **while the container is stopped**. If you edit it while qB is running, qB can write the old in-memory setting back out during shutdown and undo the change.
+Fix applied on 2026-05-03:
+- set `Session\GlobalMaxRatio=-1`
+- set `Session\GlobalMaxSeedingMinutes=5`
+- keep `Session\ShareLimitAction=Remove`
+
+Operational meaning now:
+- completed torrents remain in qB for up to ~5 minutes after completion
+- Sonarr/Radarr have enough time to import/move them
+- qB still cleans up automatically afterward instead of leaving completed entries forever
+
+Verification after the fix:
+- qB prefs show `max_ratio_enabled=false`
+- qB prefs show `max_seeding_time_enabled=true` with `max_seeding_time=5`
+- stranded backlog in `torrents/complete` was manually cleared/imported on 2026-05-03
+
+If this behavior regresses, check these first:
+1. `Session\GlobalMaxRatio` is **not** `0`
+2. `Session\GlobalMaxSeedingMinutes` is set (currently `5`)
+3. `Session\ShareLimitAction=Remove`
+4. Sonarr/Radarr still have completed download handling enabled
+
+Important: if you edit qB config by hand, prefer doing it with qB stopped; otherwise qB can write its in-memory settings back during shutdown and undo the change.
 
 ## 9. Networking
 

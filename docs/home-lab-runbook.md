@@ -203,17 +203,25 @@ The standard quality profile is **Ultra-HD**, but it has been redefined to mean:
 - upgrades allowed
 
 ### Sonarr
-All series were assigned to **Ultra-HD**.
-Current series count at the time of writing: about **57**.
+Most general TV is still on the broader profiles, but the storage-recovery pass added a stricter same-quality / smaller-encode bias for targeted cleanup work.
+Current series count at the time of writing: about **58** after re-adding **Frasier** to Sonarr.
 
-Sonarr also has custom-format scoring to bias toward:
+Sonarr custom-format scoring now biases toward:
 - Plex-friendly WEB releases
 - Plex-friendly audio
 - **English audio when available**
 - smaller files
-- not giant releases
+- **HEVC/x265 when it is a cleaner encode choice**
+- away from **REMUX** releases for replacement hunts
+- away from obvious **AI-upscale / 60fps / RIFE / DirtyHippie** nonsense
 
 The English-audio rule is a **preference, not a hard requirement**. Non-English releases can still be accepted when no English-audio option exists.
+
+Storage-recovery execution on 2026-05-03:
+- `Mr. Robot`, `The Office (US)`, and `Firefly` were moved to **HD-1080p** so Sonarr stops favoring oversized UHD-ish garbage for shows that should really just be good 1080p.
+- `The Bear`, `The Mandalorian`, `Mythic Quest`, and `Percy Jackson and the Olympians` stayed on **Ultra-HD** with stricter scoring for saner encodes.
+- `Frasier` was added back into Sonarr and placed on **HD-1080p** so it can participate in replacement searches instead of sitting unmanaged on disk.
+- Episode searches were triggered for: `Mr. Robot`, `Frasier`, `The Office (US)`, `Firefly`, `The Bear`, `The Mandalorian`, `Mythic Quest`, and `Percy Jackson and the Olympians`.
 
 Notably, **no TV-specific 3D rule** was added.
 
@@ -234,6 +242,24 @@ Radarr custom-format scoring on Ultra-HD is intentionally biased toward compress
 - **Penalize Remux** = `-250`
 
 The same general bias was also applied to the 1080p-oriented movie profiles, with **Prefer Under 5 GB** = `+75` and **Prefer English Audio** = `+100`.
+
+Storage-recovery execution on 2026-05-03 also kicked off a focused movie replacement pass for:
+- `Star Wars: Episode I - The Phantom Menace`
+- `The Shining`
+- `Monsters University`
+- `Titanic`
+- `Anora`
+- `Dune (2021)`
+- `Jumanji (1995)`
+- `The Sound of Music`
+- `Spirit: Stallion of the Cimarron`
+- `The Matrix Reloaded`
+- `Independence Day`
+- `Stardust`
+- `Aladdin (2019)`
+- `Avatar (2009)`
+
+`Spirit: Stallion of the Cimarron` was re-monitored in Radarr before the search so it would actually participate.
 
 Radarr quality-profile language was changed from **Original** to **Any**, so English audio is now a strong preference rather than a hard original-language bias.
 

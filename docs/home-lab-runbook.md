@@ -506,6 +506,7 @@ When reconciling stranded payloads from `/mnt/das/data/completed`:
 - for Kids TV migrations, copying the already-verified library payload into `/mnt/das/data/Kids TV` can be faster and safer than re-importing from a messy completed release tree
 - broad/folder-wide Sonarr manual-import calls on historical orphan packs were brittle; per-file or small targeted handling was safer until canonical placement + rescan became the better fallback
 - on 2026-05-03, duplicate-library cleanup confirmed that the only real duplicate TV payloads were an old `Frasier._archive_2026-04-14` folder (46 episodes, ~16.3 GiB) and one malformed `The Office (US)` Season 6 file (`The.Office.S06E0013...mp4`, ~0.46 GiB). The only duplicate movie payload found was `How to Train Your Dragon (2025)`, where the larger 11.82 GiB IMAX file was removed and the smaller 3.90 GiB WEBRip was kept per Chris's preference to minimize space.
+- on 2026-05-04, stale qB incomplete payloads were cleaned by comparing `/mnt/das/data/torrents/incomplete` top-level entries against qB session state in `/home/cass/downloads/qbittorrent/config/qBittorrent/BT_backup/*.fastresume`; keep only entries whose torrent still had `completed_time=0`, `paused=0`, and `save_path` under `incomplete`. That pass removed 24 stale entries (mostly abandoned `Mr. Robot` remux seasons plus dead movie grabs like `Dune`, `The Matrix`, `Avatar 3D`, and `Pulp Fiction`) and left only currently active incomplete payloads on disk.
 
 ### 2026-04 RAID member replacement / rebuild incident
 Observed state during the incident:

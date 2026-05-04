@@ -222,6 +222,7 @@ Storage-recovery execution on 2026-05-03:
 - `The Bear`, `The Mandalorian`, `Mythic Quest`, and `Percy Jackson and the Olympians` stayed on **Ultra-HD** with stricter scoring for saner encodes.
 - `Frasier` was added back into Sonarr and placed on **HD-1080p** so it can participate in replacement searches instead of sitting unmanaged on disk.
 - Episode searches were triggered for: `Mr. Robot`, `Frasier`, `The Office (US)`, `Firefly`, `The Bear`, `The Mandalorian`, `Mythic Quest`, and `Percy Jackson and the Olympians`.
+- Later that same night, Chris decided `Mythic Quest` should be removed entirely rather than downsized. The Sonarr series entry was deleted and the orphaned on-disk library folder was manually removed after Sonarr failed to clean the files. That reclaimed roughly **90 GB**, taking free space from about **236 GB** to about **322 GB**.
 
 Notably, **no TV-specific 3D rule** was added.
 

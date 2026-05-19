@@ -137,6 +137,15 @@ Apps in the stack:
 - **Bazarr**: subtitles
 - **Plex**: media server
 
+### Plex client compatibility note
+- On 2026-05-18, live troubleshooting showed Samsung/Tizen (TV 2021) playback halting on a 4K HEVC/HDR file when Plex left direct play and entered a subtitle/audio transcode path.
+- The concrete failing pattern was: HEVC video + DTS audio + active SRT subtitles on the Tizen client. Plex stayed healthy, but the TV session hit buffering until playback was forced back to direct play.
+- Practical mitigations:
+  - prefer Direct Play / Original Quality on Samsung TV clients when possible
+  - prefer AC3 / EAC3 / AAC audio over DTS for broadly compatible library copies
+  - avoid subtitle burn / unnecessary subtitle transcode paths on Tizen when playback gets unstable
+- Treat this as a client-compatibility issue first, not a blanket Plex-server failure.
+
 ### Seerr
 - Image: `seerr/seerr:latest`
 - Config path: `/opt/compose/arr-stack/seerr`

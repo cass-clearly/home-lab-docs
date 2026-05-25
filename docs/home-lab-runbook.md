@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-04-16
+Last updated: 2026-05-25
 
 ## 1. What this setup is
 
@@ -140,10 +140,19 @@ Apps in the stack:
 ### Plex client compatibility note
 - On 2026-05-18, live troubleshooting showed Samsung/Tizen (TV 2021) playback halting on a 4K HEVC/HDR file when Plex left direct play and entered a subtitle/audio transcode path.
 - The concrete failing pattern was: HEVC video + DTS audio + active SRT subtitles on the Tizen client. Plex stayed healthy, but the TV session hit buffering until playback was forced back to direct play.
+- On 2026-05-25, `Percy Jackson and the Olympians` S01E01 stalled for the same general reason, but the uglier file-level version of it: the MKV had **many audio and subtitle streams all flagged as default**. Plex then tended to hand the Samsung client an unnecessary compatibility path (EAC3/Atmos audio transcode + subtitle handling) even though the server itself was healthy.
+- Fix applied on 2026-05-25:
+  - remuxed the file **without re-encoding**
+  - set the **English AAC stereo** track as the only default audio track
+  - cleared **all subtitle default flags**
+  - restarted `plexmediaserver`
+  - retained a backup alongside the file as `*.pre-cassfix.bak.mkv`
 - Practical mitigations:
   - prefer Direct Play / Original Quality on Samsung TV clients when possible
   - prefer AC3 / EAC3 / AAC audio over DTS for broadly compatible library copies
   - avoid subtitle burn / unnecessary subtitle transcode paths on Tizen when playback gets unstable
+  - if one title alone is weird while Plex overall looks healthy, inspect the file’s stream defaults before blaming CPU/disk/network
+  - `ffprobe -show_streams <file>` is the fastest way to spot “everything marked default” garbage
 - Treat this as a client-compatibility issue first, not a blanket Plex-server failure.
 
 ### Seerr

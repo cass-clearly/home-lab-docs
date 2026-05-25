@@ -142,11 +142,13 @@ Apps in the stack:
 - The concrete failing pattern was: HEVC video + DTS audio + active SRT subtitles on the Tizen client. Plex stayed healthy, but the TV session hit buffering until playback was forced back to direct play.
 - On 2026-05-25, `Percy Jackson and the Olympians` S01E01 stalled for the same general reason, but the uglier file-level version of it: the MKV had **many audio and subtitle streams all flagged as default**. Plex then tended to hand the Samsung client an unnecessary compatibility path (EAC3/Atmos audio transcode + subtitle handling) even though the server itself was healthy.
 - Fix applied on 2026-05-25:
-  - remuxed the file **without re-encoding**
+  - first fixed `S01E01`, then scanned the rest of the series and found `S01E02` had the same fully-broken default flags
+  - proactively normalized **all of S01E01–S01E08** for consistency
+  - remuxed each file **without re-encoding**
   - set the **English AAC stereo** track as the only default audio track
   - cleared **all subtitle default flags**
   - restarted `plexmediaserver`
-  - retained a backup alongside the file as `*.pre-cassfix.bak.mkv`
+  - retained backups alongside the originals as `*.pre-cassfix.bak.mkv`
 - Practical mitigations:
   - prefer Direct Play / Original Quality on Samsung TV clients when possible
   - prefer AC3 / EAC3 / AAC audio over DTS for broadly compatible library copies

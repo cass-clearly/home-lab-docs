@@ -170,12 +170,21 @@ Apps in the stack:
   - deleted `/mnt/das/data/torrents/complete/Mr.Robot.S04.BluRay.1080p.DTS-HD.MA.5.1.AVC.REMUX-FraMeSToR`
   - cleared old cleanup trash directories: `_cass_cleanup_trash_20260504-141730`, `_cass_cleanup_trash_20260504-141848`
   - forced Plex TV library refresh and emptied Plex trash for section `3` (`TV Shows`)
+- Follow-on cleanup/tuning for `Curb Your Enthusiasm` on 2026-05-26:
+  - measured the existing library at about **415 GB** in episode payloads / **441 GB** on disk
+  - confirmed it was **not 4K**; the bloat came mostly from **1080p BluRay remux** episodes, many in the **4–10 GB per episode** range
+  - created a series-specific Sonarr quality profile: **`Curb 1080p Small`**
+  - that profile allows only **1080p HDTV / WEB-DL / WEBRip**, disables **Bluray-1080p** and **Bluray-1080p Remux**, and strongly prefers **x265 / WEB / under-30-GB** releases
+  - deleted `/mnt/das/data/media/TV Shows/Curb Your Enthusiasm`
+  - updated Sonarr series `23` to use the new profile and triggered a rescan + fresh series search
+  - early grabs after the re-search were compact season packs like `Curb.Your.Enthusiasm.S01.1080p.WEBRip.x265` (~4.8 GB), `S02` (~4.9 GB), `S03` (~5.0 GB), and `S04` (~5.5 GB)
 - Post-cleanup result:
-  - `/mnt/das/data` recovered to about **681 GB free** (`88%` used instead of full)
+  - `/mnt/das/data` first recovered to about **681 GB free** after the Mr. Robot + trash cleanup, then to about **1.1 TB free** after deleting `Curb Your Enthusiasm`
 - Operational lesson:
   - when Arr queue cleanup looks broken, always check `df -h /mnt/das/data` first
   - if Sonarr shows `importBlocked` + `Not enough free space`, the problem is disk pressure, not ordinary completed-download handling
   - completed torrent payloads can become duplicate space sinks once imports partially succeed and then stall
+  - for catalog TV where storage efficiency matters more than archival quality, a series-specific constrained profile can prevent remux blowups without changing the rest of the library
 ### Seerr
 - Image: `seerr/seerr:latest`
 - Config path: `/opt/compose/arr-stack/seerr`

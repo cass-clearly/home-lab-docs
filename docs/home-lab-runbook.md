@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## 1. What this setup is
 
@@ -157,6 +157,25 @@ Apps in the stack:
   - `ffprobe -show_streams <file>` is the fastest way to spot “everything marked default” garbage
 - Treat this as a client-compatibility issue first, not a blanket Plex-server failure.
 
+### 2026-05-26 emergency space cleanup + Mr. Robot removal
+- Symptom: Sonarr queue looked "stuck" with completed torrents that were not being removed from qBittorrent.
+- Root cause was **not** a bad Sonarr setting. Sonarr already had `removeCompletedDownloads=true`, but `/mnt/das/data` was effectively full, so imports were landing in `importBlocked` with `Not enough free space` and the completed payloads stayed behind.
+- Verified hot spots before cleanup:
+  - `/mnt/das/data/media/TV Shows/Mr. Robot` -> about **356 GB**
+  - `/mnt/das/data/torrents/complete/Mr.Robot.S04...` -> about **145 GB** duplicate payload
+  - `/mnt/das/data/_cass_cleanup_trash_*` -> about **181 GB** total
+- User-directed cleanup performed on 2026-05-26:
+  - removed `Mr. Robot` from Sonarr (`series id 73`) so it would not re-grab after deletion
+  - deleted `/mnt/das/data/media/TV Shows/Mr. Robot`
+  - deleted `/mnt/das/data/torrents/complete/Mr.Robot.S04.BluRay.1080p.DTS-HD.MA.5.1.AVC.REMUX-FraMeSToR`
+  - cleared old cleanup trash directories: `_cass_cleanup_trash_20260504-141730`, `_cass_cleanup_trash_20260504-141848`
+  - forced Plex TV library refresh and emptied Plex trash for section `3` (`TV Shows`)
+- Post-cleanup result:
+  - `/mnt/das/data` recovered to about **681 GB free** (`88%` used instead of full)
+- Operational lesson:
+  - when Arr queue cleanup looks broken, always check `df -h /mnt/das/data` first
+  - if Sonarr shows `importBlocked` + `Not enough free space`, the problem is disk pressure, not ordinary completed-download handling
+  - completed torrent payloads can become duplicate space sinks once imports partially succeed and then stall
 ### Seerr
 - Image: `seerr/seerr:latest`
 - Config path: `/opt/compose/arr-stack/seerr`

@@ -178,13 +178,25 @@ Apps in the stack:
   - deleted `/mnt/das/data/media/TV Shows/Curb Your Enthusiasm`
   - updated Sonarr series `23` to use the new profile and triggered a rescan + fresh series search
   - early grabs after the re-search were compact season packs like `Curb.Your.Enthusiasm.S01.1080p.WEBRip.x265` (~4.8 GB), `S02` (~4.9 GB), `S03` (~5.0 GB), and `S04` (~5.5 GB)
+- Follow-on cleanup/tuning for `Battlestar Galactica (2003)` on 2026-05-26:
+  - measured the existing library at about **565 GB**
+  - confirmed it was dominated by **1080p BluRay remux** payloads (`53` remux episodes out of `72`)
+  - created a series-specific Sonarr profile: **`Battlestar 1080p Small`**
+  - this profile keeps **1080p only**, allows non-remux **Bluray-1080p / WEB-DL / WEBRip / HDTV-1080p**, disables **Bluray-1080p Remux**, and strongly favors **x265 / smaller releases**
+  - deleted `/mnt/das/data/media/TV Shows/Battlestar Galactica (2003)` and retriggered Sonarr search while keeping the series monitored
+  - Sonarr immediately started pulling compact replacements instead of remuxes, including season packs around **7.9 GB**, **9.6 GB**, and one larger-but-still-non-remux **1080p x265** pack around **31.9 GB**
+- Global policy tuning on 2026-05-26:
+  - set **`Penalize Remux` = `-1000` across all Sonarr quality profiles**
+  - set **`Penalize Remux` = `-1000` across all Radarr quality profiles**
+  - swept stale completed payloads from `/mnt/das/data/torrents/complete`, leaving only automation directories (`manual-complete-events`, `qb-hooks`)
 - Post-cleanup result:
-  - `/mnt/das/data` first recovered to about **681 GB free** after the Mr. Robot + trash cleanup, then to about **1.1 TB free** after deleting `Curb Your Enthusiasm`
+  - `/mnt/das/data` first recovered to about **681 GB free** after the Mr. Robot + trash cleanup, then to about **1.1 TB free** after deleting `Curb Your Enthusiasm`, and then to about **1.8 TB free** after deleting `Battlestar Galactica (2003)` plus stale completed payloads
 - Operational lesson:
   - when Arr queue cleanup looks broken, always check `df -h /mnt/das/data` first
   - if Sonarr shows `importBlocked` + `Not enough free space`, the problem is disk pressure, not ordinary completed-download handling
   - completed torrent payloads can become duplicate space sinks once imports partially succeed and then stall
   - for catalog TV where storage efficiency matters more than archival quality, a series-specific constrained profile can prevent remux blowups without changing the rest of the library
+  - if you want remuxes to remain technically allowed but rarely chosen, a very strong negative custom-format score works well as a global default in both Sonarr and Radarr
 ### Seerr
 - Image: `seerr/seerr:latest`
 - Config path: `/opt/compose/arr-stack/seerr`

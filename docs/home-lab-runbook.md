@@ -157,6 +157,13 @@ Apps in the stack:
   - `ffprobe -show_streams <file>` is the fastest way to spot “everything marked default” garbage
 - Treat this as a client-compatibility issue first, not a blanket Plex-server failure.
 
+### 2026-06-01 Plex episode-order mismatch note
+- If Plex shows a long run of episodes as "off by one," check whether the source release **combined a multi-part special into one file** while Plex metadata expects separate parts.
+- Concrete example: `Seinfeld` season 6 had a `S06E14` file that runs about **45 minutes**. That file is effectively a combined `Highlights of 100` special, while Plex metadata commonly expects it split as `S06E14` + `S06E15`.
+- Result: every later file in that season can look shifted by one title even though Plex is matching against the filename exactly as given.
+- Fast check: compare runtime around the first bad title. A suspiciously double-length earlier file usually exposes the real problem.
+- Fix path: rename the combined file as a multi-episode file (for example `S06E14-E15`) and then renumber subsequent files to line up with the metadata source Plex is using.
+
 ### 2026-05-26 emergency space cleanup + Mr. Robot removal
 - Symptom: Sonarr queue looked "stuck" with completed torrents that were not being removed from qBittorrent.
 - Root cause was **not** a bad Sonarr setting. Sonarr already had `removeCompletedDownloads=true`, but `/mnt/das/data` was effectively full, so imports were landing in `importBlocked` with `Not enough free space` and the completed payloads stayed behind.

@@ -173,7 +173,14 @@ Apps in the stack:
   - `S06E22` actually contained `The Face Painter`
   - `S06E23` and a separately-named `S06E24 The Understudy ...mkv` both contained `The Understudy`
   - practical meaning: the pack was missing `The Kiss Hello` and duplicated `The Understudy`
-- Safe fix applied: moved the duplicate standalone `The Understudy` file out of the library and renamed the shifted `S06E17`-`S06E23` files forward by one episode number, leaving `S06E17` absent instead of mislabeled. That makes Plex show correct titles for `S06E18` onward while honestly exposing the missing episode.
+- Safe fix applied: moved the duplicate standalone `The Understudy` file out of the library, renamed the combined clip show to `S06E14E15`, moved the duplicate standalone `S06E15` clip-show part out of the library, and renamed the shifted `S06E17`-`S06E23` files forward by one episode number. Result: Plex should now show season 6 correctly except for an honest missing `S06E17` (`The Kiss Hello`).
+- Broader Seinfeld audit on 2026-06-02 found the same source-pack pattern in multiple other seasons and fixed the confirmed cases:
+  - **Season 3:** `S03E17` was a combined `The Boyfriend (1)(2)` file; later files were shifted; `S03E23 The Keys ...mkv` was a duplicate. Fixed by renaming to `S03E17E18`, shifting `S03E18`-`S03E22` forward, and moving the duplicate standalone `The Keys` file out of the library.
+  - **Season 4:** `S04E03` was a combined `The Pitch` / `The Ticket` file and `S04E22` was a combined `The Pilot (1)(2)` file. Fixed by renaming them to `S04E03E04` and `S04E23E24`, then shifting `S04E04`-`S04E21` forward by one.
+  - **Season 5:** `S05E18` was a combined `The Raincoats (1)(2)` file; later files were shifted; standalone `S05E22 The Opposite ...mkv` was a duplicate. Fixed by renaming to `S05E18E19`, shifting `S05E19`-`S05E21` forward, and moving the duplicate standalone `The Opposite` file out of the library.
+  - **Season 7:** `S07E14` was a combined `The Cadillac (1)(2)` file and `S07E20` was a combined `The Bottle Deposit (1)(2)` file; the pack also carried duplicate trailing standalone copies of `The Wait Out` / `The Invitations`. Fixed by renaming to `S07E14E15` and `S07E21E22`, shifting `S07E15`-`S07E19` plus `S07E21`-`S07E22` forward, and moving the duplicate standalone `S07E23`/`S07E24` files out of the library.
+  - **Season 9:** `S09E21` was a combined `The Chronicle (1)(2)` file and `S09E22` was a combined `The Finale (1)(2)` file. Fixed by renaming them to `S09E21E22` and `S09E23E24`.
+- Duplicates removed from the live library were preserved under `/home/cass/.openclaw/workspace/tmp/seinfeld-backup/Seinfeld-mispack-20260602/` rather than deleted outright.
 
 ### 2026-05-26 emergency space cleanup + Mr. Robot removal
 - Symptom: Sonarr queue looked "stuck" with completed torrents that were not being removed from qBittorrent.

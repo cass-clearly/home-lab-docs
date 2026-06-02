@@ -163,6 +163,17 @@ Apps in the stack:
 - Result: every later file in that season can look shifted by one title even though Plex is matching against the filename exactly as given.
 - Fast check: compare runtime around the first bad title. A suspiciously double-length earlier file usually exposes the real problem.
 - Fix path: rename the combined file as a multi-episode file (for example `S06E14-E15`) and then renumber subsequent files to line up with the metadata source Plex is using.
+- Concrete Seinfeld season 6 audit on 2026-06-02 found a second, uglier source-pack problem beyond the clip-show runtime oddity:
+  - `S06E16` was correct (`The Beard`)
+  - `S06E17` actually contained `The Doorman`
+  - `S06E18` actually contained `The Jimmy`
+  - `S06E19` actually contained `The Doodle`
+  - `S06E20` actually contained `The Fusilli Jerry`
+  - `S06E21` actually contained `The Diplomat's Club`
+  - `S06E22` actually contained `The Face Painter`
+  - `S06E23` and a separately-named `S06E24 The Understudy ...mkv` both contained `The Understudy`
+  - practical meaning: the pack was missing `The Kiss Hello` and duplicated `The Understudy`
+- Safe fix applied: moved the duplicate standalone `The Understudy` file out of the library and renamed the shifted `S06E17`-`S06E23` files forward by one episode number, leaving `S06E17` absent instead of mislabeled. That makes Plex show correct titles for `S06E18` onward while honestly exposing the missing episode.
 
 ### 2026-05-26 emergency space cleanup + Mr. Robot removal
 - Symptom: Sonarr queue looked "stuck" with completed torrents that were not being removed from qBittorrent.

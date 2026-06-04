@@ -676,6 +676,18 @@ If qB credentials are changed:
 
 Do not assume fixing qB alone is enough. Sonarr and Radarr can silently remain broken until their stored credentials are updated too.
 
+### Sonarr season-pack import edge case
+If a finished season pack is visible in Sonarr queue as `completed` / `importPending` with `No files found are eligible for import`, but the payload files are clearly named like normal episodes, Sonarr may fail to auto-import the pack even though Plex can read the files fine.
+
+What worked:
+1. Verify the completed payload folder under `/mnt/das/data/torrents/complete/...` actually contains one `.mkv` per episode with sane `S01E##` names.
+2. Create the library folder under `/mnt/das/data/media/TV Shows/<Series Name>` if needed.
+3. Hard-link the episode files from the completed torrent folder into the library folder (`ln`, not copy) so Plex/library sees them immediately without duplicating disk usage.
+4. Trigger a Plex section refresh for the TV library.
+5. Once the library copy is confirmed, remove the completed torrent payload so only the library copy remains.
+
+Sanity check: inode/link-count checks should show the hard links shared the same inode before cleanup, and after deleting the torrent payload the library files should remain with link count `1`.
+
 ### For tracker discovery
 A recurring reminder exists to check for private tracker openings/invites.
 Current target trackers:
@@ -695,6 +707,7 @@ Current target trackers:
 - health script: `/usr/local/sbin/check-nas-health`
 - media mount: `/mnt/das/data`
 - compatibility symlink: `/mnt/nas/data`
+- Plex preferences/token source: `/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Preferences.xml`
 
 ## 16. What should be kept up to date
 

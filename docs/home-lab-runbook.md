@@ -182,6 +182,25 @@ Apps in the stack:
   - **Season 9:** `S09E21` was a combined `The Chronicle (1)(2)` file and `S09E22` was a combined `The Finale (1)(2)` file. Fixed by renaming them to `S09E21E22` and `S09E23E24`.
 - Duplicates removed from the live library were preserved under `/home/cass/.openclaw/workspace/tmp/seinfeld-backup/Seinfeld-mispack-20260602/` rather than deleted outright.
 
+### 2026-06-03 qBittorrent errored torrents: permission issue, not disk space
+- Symptom: qBittorrent showed multiple torrents in an errored state, including `The Book of Boba Fett` episodes and `Pocket Monsters`.
+- Disk check at the time showed the NAS was **not** full: `/mnt/das/data` had about **1.7 TB free** (`5.5T` total, `3.6T` used, `69%` used).
+- Root cause: qBittorrent's incomplete path was not writable from inside the container even though the host directory looked mostly sane.
+  - Host path: `/mnt/das/data/torrents/incomplete`
+  - Inside container, both `/data/torrents/incomplete` and `/incomplete` were presenting as effectively **root-owned / non-writable to UID 1000 (`abc`)**
+  - Verified failure with: `docker exec -u 1000:1000 qbittorrent sh -lc 'touch /data/torrents/incomplete/qb-write-test'`
+  - qB logs showed repeated `File error alert ... Permission denied` for affected torrents
+- Live fix applied:
+  - changed permissions from inside the container on `/incomplete` and `/data/torrents/incomplete` so the qB app user could write again
+  - restarted the `qbittorrent` container
+  - verified post-fix with a successful container-side write test to `/data/torrents/incomplete`
+- Operational lesson:
+  - if qB shows `errored`, do **not** assume disk pressure first just because that was the prior failure mode
+  - check both:
+    - `df -h /mnt/das/data`
+    - `docker exec -u 1000:1000 qbittorrent sh -lc 'touch /data/torrents/incomplete/qb-write-test && rm /data/torrents/incomplete/qb-write-test'`
+  - qB `File error alert ... Permission denied` means the incomplete download path itself is broken for the container user
+
 ### 2026-05-26 emergency space cleanup + Mr. Robot removal
 - Symptom: Sonarr queue looked "stuck" with completed torrents that were not being removed from qBittorrent.
 - Root cause was **not** a bad Sonarr setting. Sonarr already had `removeCompletedDownloads=true`, but `/mnt/das/data` was effectively full, so imports were landing in `importBlocked` with `Not enough free space` and the completed payloads stayed behind.
@@ -657,6 +676,18 @@ If qB credentials are changed:
 
 Do not assume fixing qB alone is enough. Sonarr and Radarr can silently remain broken until their stored credentials are updated too.
 
+### Sonarr season-pack import edge case
+If a finished season pack is visible in Sonarr queue as `completed` / `importPending` with `No files found are eligible for import`, but the payload files are clearly named like normal episodes, Sonarr may fail to auto-import the pack even though Plex can read the files fine.
+
+What worked:
+1. Verify the completed payload folder under `/mnt/das/data/torrents/complete/...` actually contains one `.mkv` per episode with sane `S01E##` names.
+2. Create the library folder under `/mnt/das/data/media/TV Shows/<Series Name>` if needed.
+3. Hard-link the episode files from the completed torrent folder into the library folder (`ln`, not copy) so Plex/library sees them immediately without duplicating disk usage.
+4. Trigger a Plex section refresh for the TV library.
+5. Once the library copy is confirmed, remove the completed torrent payload so only the library copy remains.
+
+Sanity check: inode/link-count checks should show the hard links shared the same inode before cleanup, and after deleting the torrent payload the library files should remain with link count `1`.
+
 ### For tracker discovery
 A recurring reminder exists to check for private tracker openings/invites.
 Current target trackers:
@@ -676,6 +707,7 @@ Current target trackers:
 - health script: `/usr/local/sbin/check-nas-health`
 - media mount: `/mnt/das/data`
 - compatibility symlink: `/mnt/nas/data`
+- Plex preferences/token source: `/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Preferences.xml`
 
 ## 16. What should be kept up to date
 

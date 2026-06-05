@@ -241,6 +241,26 @@ Apps in the stack:
   - completed torrent payloads can become duplicate space sinks once imports partially succeed and then stall
   - for catalog TV where storage efficiency matters more than archival quality, a series-specific constrained profile can prevent remux blowups without changing the rest of the library
   - if you want remuxes to remain technically allowed but rarely chosen, a very strong negative custom-format score works well as a global default in both Sonarr and Radarr
+
+### 2026-06-04 Battlestar Galactica miniseries import: completed torrent was not enough
+- Symptom: `Battlestar Galactica Mini Series` showed as finished in qBittorrent but did not appear in Plex.
+- Verified state at the time:
+  - completed payload existed at `/mnt/das/data/torrents/complete/Battlestar Galactica Mini Series`
+  - files were `S00E01 - Part 1.mkv` and `S00E02 - Part 2.mkv`
+  - the main library path `/mnt/das/data/media/TV Shows/Battlestar Galactica (2003)` had no `S00` / miniseries files yet
+- Live fix applied:
+  - created `/mnt/das/data/media/TV Shows/Battlestar Galactica (2003)/Season 00`
+  - hardlinked the two files into the library as:
+    - `Battlestar Galactica (2003) - S00E01 - Part 1.mkv`
+    - `Battlestar Galactica (2003) - S00E02 - Part 2.mkv`
+  - nudged Plex by touching the season directory after linking
+- Verification:
+  - inode checks matched between the torrent path and library path, proving **no duplicate data** was created
+  - Plex immediately touched/transcoded `S00E01`, confirming the library saw the new `Season 00` files
+- Operational lesson:
+  - qB `completed` does **not** guarantee the title is in Plex; check the actual library path when users say “it’s finished but missing in Plex”
+  - for specials/miniseries content, naming it explicitly as `Season 00` / `S00E##` is the safest Plex path
+  - hardlinking from the completed torrent payload into the library is the right recovery move when import stalls but you want to avoid duplicate disk usage
 ### Seerr
 - Image: `seerr/seerr:latest`
 - Config path: `/opt/compose/arr-stack/seerr`

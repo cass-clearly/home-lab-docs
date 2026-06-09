@@ -349,6 +349,11 @@ Storage-recovery execution on 2026-05-03:
 - Later that same night, Chris decided `Mythic Quest` should be removed entirely rather than downsized. The Sonarr series entry was deleted and the orphaned on-disk library folder was manually removed after Sonarr failed to clean the files. That reclaimed roughly **90 GB**, taking free space from about **236 GB** to about **322 GB**.
 - Later that same night, Chris asked for a harder reset on `Mr. Robot` and `Firefly`: both were removed from the library and from Sonarr, the leftover on-disk payloads were manually deleted after Sonarr again failed to fully clean files, and both series were re-added fresh. `Mr. Robot` was re-added on **HD-1080p** to bias toward smaller sane encodes. `Firefly` was re-added on **Ultra-HD** so 2160p remains preferred, but with the smaller-file / anti-remux / anti-AI-upscale scoring still in effect. That jump took free space to about **1006 GB**.
 
+Bluey specials monitoring update on 2026-06-09:
+- `Bluey (2018)` stayed monitored at the series level, but newer aired **Season 0** extras were manually flipped to `monitored=true` in Sonarr so they are tracked alongside the main show.
+- The monitored specials now include: `Goldilocks`, `Alongside`, `Christmas Xylophone`, `Burger Dog (Music Video)`, `Bluey's Big Play`, `The Sign` special entry, and `Bluey's Brisbane` episodes 1-4.
+- Future-dated Season 0 entries were left alone rather than mass-monitoring every special placeholder.
+
 Notably, **no TV-specific 3D rule** was added.
 
 ### Radarr

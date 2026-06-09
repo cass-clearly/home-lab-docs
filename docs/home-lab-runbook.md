@@ -352,7 +352,7 @@ Storage-recovery execution on 2026-05-03:
 Bluey specials monitoring update on 2026-06-09:
 - `Bluey (2018)` stayed monitored at the series level, but newer aired **Season 0** extras were manually flipped to `monitored=true` in Sonarr so they are tracked alongside the main show.
 - The monitored specials now include: `Goldilocks`, `Alongside`, `Christmas Xylophone`, `Burger Dog (Music Video)`, `Bluey's Big Play`, `The Sign` special entry, and `Bluey's Brisbane` episodes 1-4.
-- Future-dated Season 0 entries were left alone rather than mass-monitoring every special placeholder.
+- Later that same thread, Season 0 itself was switched to `monitored=true` on the series record while `monitorNewItems` remained `all`, so future Bluey specials/placeholders should inherit monitoring automatically instead of needing one-off toggles.
 
 Notably, **no TV-specific 3D rule** was added.
 

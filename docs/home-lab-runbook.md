@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-05-26
+Last updated: 2026-06-15
 
 ## 1. What this setup is
 
@@ -666,6 +666,33 @@ Operational rule:
 - while rebuild is in progress, do not assume the array is failed if one member is missing from the active set
 - treat it as an active rebuild unless progress stalls or mdadm reports a failed member
 - keep the recurring rebuild-status check running until md0 is fully clean with both members active, then remove that temporary cron
+
+### 2026-06 Signal receive outage (Cass bridge)
+Symptoms:
+- outbound Signal sends could still work
+- inbound messages to Cass stopped arriving
+- OpenClaw gateway logs showed `receive exception: getServerGuid(...) must not be null`
+- affected senders would often see messages stuck at one checkmark
+
+Root cause:
+- `signal-cli` 0.14.1 was hit by the sealed-sender `serverGuid` receive bug that started around 2026-06-10
+- this was not an OpenClaw routing/config bug; the Signal daemon itself could no longer process some incoming envelopes
+
+Fix applied on this host:
+- downloaded Signal CLI **0.14.5** native binary to `/home/cass/.local/opt/signal-cli-0.14.5-native/signal-cli`
+- updated the user service at `/home/cass/.config/systemd/user/signal-cli.service`
+- service now runs:
+  - `/home/cass/.local/opt/signal-cli-0.14.5-native/signal-cli -a +17194196485 daemon --http 127.0.0.1:8080 --no-receive-stdout --send-read-receipts`
+
+Verification commands:
+- `systemctl --user --no-pager --full status signal-cli.service`
+- `journalctl --user -u openclaw-gateway.service -n 120 --no-pager | grep -Ei '\[signal\]|signal'`
+- `journalctl --user -u signal-cli.service -n 120 --no-pager`
+- send a real test Signal to Cass and confirm it is received
+
+Recovery note:
+- if this regresses after a future Signal server change, first check signal-cli release notes/issues before assuming gateway config drift
+- if the service file ever gets reverted to `/opt/signal-cli-0.14.1-native/signal-cli`, move it back to the newer binary or newer release before deeper debugging
 
 ## 14. Operational habits that matter
 

@@ -157,6 +157,12 @@ Apps in the stack:
   - `ffprobe -show_streams <file>` is the fastest way to spot “everything marked default” garbage
 - Treat this as a client-compatibility issue first, not a blanket Plex-server failure.
 
+### 2026-07-22 Dolby Vision Profile 5 workaround
+- `The Bear` S05E05 and S05E06 were true Dolby Vision Profile 5 HEVC files (`compatibility id: 0`), so there was no HDR10 fallback stream to strip out of the MKV.
+- The proven quick workaround for this client was a **stream-copy remux from MKV to MP4**: copy the primary video and all audio streams, omit the SRT subtitle streams, and use `-movflags +faststart`. This is not a re-encode: it preserves the 4K HEVC video and EAC3 audio and takes only a couple of minutes.
+- Keep the original MKV until playback of the MP4 is confirmed. Trigger a targeted Plex refresh for `/mnt/das/data/media/TV Shows/The Bear` after creating the MP4.
+- If the MP4 workaround does not play, replace the release rather than attempting to "strip Dolby Vision"; a true Profile 5 file cannot be converted to HDR10 losslessly by remuxing alone.
+
 ### 2026-06-01 Plex episode-order mismatch note
 - If Plex shows a long run of episodes as "off by one," check whether the source release **combined a multi-part special into one file** while Plex metadata expects separate parts.
 - Concrete example: `Seinfeld` season 6 had a `S06E14` file that runs about **45 minutes**. That file is effectively a combined `Highlights of 100` special, while Plex metadata commonly expects it split as `S06E14` + `S06E15`.

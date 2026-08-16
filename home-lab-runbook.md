@@ -360,6 +360,11 @@ Bluey specials monitoring update on 2026-06-09:
 - The monitored specials now include: `Goldilocks`, `Alongside`, `Christmas Xylophone`, `Burger Dog (Music Video)`, `Bluey's Big Play`, `The Sign` special entry, and `Bluey's Brisbane` episodes 1-4.
 - Later that same thread, Season 0 itself was switched to `monitored=true` on the series record while `monitorNewItems` remained `all`, so future Bluey specials/placeholders should inherit monitoring automatically instead of needing one-off toggles.
 
+Library update on 2026-08-15:
+- Added `Junior Bake Off (2011)` to `/data/media/Kids TV` on the `Ultra-HD` quality profile.
+- Sonarr monitors Seasons 1-11 and searches for all missing episodes.
+- Enabled Impractical Jokers specials and started a targeted series search. It covers missing aired episodes in Seasons 8, 10, 11, and 13, plus Season 0 specials.
+
 Notably, **no TV-specific 3D rule** was added.
 
 ### Radarr

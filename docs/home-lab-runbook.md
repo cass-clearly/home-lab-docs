@@ -138,6 +138,7 @@ Apps in the stack:
 - **Plex**: media server
 
 ### Plex client compatibility note
+- On 2026-08-19, the Samsung TV (`TV 2021`, Plex for Samsung 5.94.3) showed the generic "Playback Error" for all attempted playback while mobile continued to work. Plex logs confirmed the TV was forcing a subtitle transcode and returning HTTP 400 with `Denying access due to session lacking permission to transcode`; this was neither storage nor server availability. Restarted Plex and upgraded Plex Media Server from `1.43.1.10611-1e34174b1` to `1.43.3.10896-cb3ebc72d`. If it recurs, fully exit/relaunch the Samsung Plex app first; during a test, turn subtitles off to avoid its problematic sidecar-subtitle transcode path.
 - On 2026-05-18, live troubleshooting showed Samsung/Tizen (TV 2021) playback halting on a 4K HEVC/HDR file when Plex left direct play and entered a subtitle/audio transcode path.
 - The concrete failing pattern was: HEVC video + DTS audio + active SRT subtitles on the Tizen client. Plex stayed healthy, but the TV session hit buffering until playback was forced back to direct play.
 - On 2026-05-25, `Percy Jackson and the Olympians` S01E01 stalled for the same general reason, but the uglier file-level version of it: the MKV had **many audio and subtitle streams all flagged as default**. Plex then tended to hand the Samsung client an unnecessary compatibility path (EAC3/Atmos audio transcode + subtitle handling) even though the server itself was healthy.

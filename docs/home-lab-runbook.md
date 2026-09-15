@@ -2,7 +2,7 @@
 
 Living documentation for Chris's media/home-lab setup. The goal is simple: if Cass disappears, Chris should still be able to operate, troubleshoot, move, and recover the stack.
 
-Last updated: 2026-06-15
+Last updated: 2026-09-14
 
 ## 1. What this setup is
 
@@ -138,6 +138,7 @@ Apps in the stack:
 - **Plex**: media server
 
 ### Plex client compatibility note
+- Routine media-stack update on 2026-09-14: Plex Media Server was upgraded to `1.43.4.10903-e5521bd8c`; Sonarr and Radarr were refreshed from their upstream `latest` LinuxServer images and reported `4.0.19.2979` and `6.3.0.10514`, respectively. Verified after the restart: Plex `/identity`, Sonarr `/ping`, and Radarr `/ping` each returned HTTP `200`. Plex's graceful restart became stuck while stopping, so the service was explicitly killed and started; it then returned healthy. If a future Plex restart remains in `deactivating` after roughly a minute, use `sudo systemctl kill -s SIGKILL plexmediaserver`, then `sudo systemctl start plexmediaserver` and verify `curl -fsS http://127.0.0.1:32400/identity`.
 - On 2026-08-19, the Samsung TV (`TV 2021`, Plex for Samsung 5.94.3) showed the generic "Playback Error" for all attempted playback while mobile continued to work. Plex logs confirmed the TV was forcing a subtitle transcode and returning HTTP 400 with `Denying access due to session lacking permission to transcode`; this was neither storage nor server availability. Restarted Plex and upgraded Plex Media Server from `1.43.1.10611-1e34174b1` to `1.43.3.10896-cb3ebc72d`. If it recurs, fully exit/relaunch the Samsung Plex app first; during a test, turn subtitles off to avoid its problematic sidecar-subtitle transcode path.
 - Follow-up diagnosis on 2026-08-19: after the server restart, the Samsung client could browse the library but sent **no playback-start / MDE request** at all. Plex, its transcoders, media mounts, and 78 GB of local working space were healthy. This is a stale or corrupted Samsung Plex app state, not a server-side media failure. Recovery: on the TV, go to **Settings → Support → Device Care → Manage Storage → Plex → Clear data** (or uninstall/reinstall Plex if that menu is unavailable), then sign back in and retry. A normal app close/reopen is insufficient for this state.
 - Root cause found later that day: Plex's **Preferred network interface** was pinned to obsolete `eth0`, while the host's live LAN interface is `wlp3s0` (`192.168.5.204`). Fixed it to `wlp3s0`, published `http://192.168.5.204:32400` as the custom LAN access URL, and restarted Plex. If a LAN client can browse but fails before Plex records any playback decision, check this setting before blaming the client.

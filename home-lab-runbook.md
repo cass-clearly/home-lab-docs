@@ -597,6 +597,10 @@ Practical implication:
 - some queue hygiene may be easier in the UI than via automation
 
 ### Radarr bulk search bug
+On 2026-09-25, a manual `MissingSearch` command returned HTTP 500 (`Sequence contains no matching element`) on Radarr 6.3.0.10514. For an authorized all-missing search, query the monitored missing movies and submit one `MoviesSearch` command with their IDs instead; that fallback queued successfully.
+
+Sonarr 4.0.19.2979 accepted `MissingEpisodeSearch` normally for the full monitored missing-episode set.
+
 Known error path:
 - `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
 

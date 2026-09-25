@@ -726,6 +726,12 @@ More indexers is not always better.
 Prefer a smaller set of decent sources over a huge pile of junk.
 Private trackers are likely the next meaningful quality step.
 
+#### Prowlarr-to-Radarr category-sync failures
+- On 2026-09-25, `LimeTorrents` advertised a Movies category to Prowlarr but failed Radarr's required category test. Prowlarr retried that invalid sync on every Application Indexer Sync pass.
+- Scope the Radarr application to its tested movie-capable indexers with the `radarr-sync` Prowlarr tag. Keep the incompatible indexer available to Sonarr's TV path rather than disabling it globally.
+- `TorrentGalaxy` was also removed from Radarr during the repair because its validation request redirected to `torrentgalaxy.info/get-posts/`; it must pass validation before being restored.
+- Verify the repair by running the Prowlarr `Application Indexer Sync` task and confirming no `No Results in configured categories` errors appear. Radarr RSS must remain enabled for the retained indexers.
+
 ### For Sonarr / Radarr path hygiene
 Preventive habit:
 - series and movie paths stored in Sonarr/Radarr should point to real directories on disk

@@ -718,6 +718,9 @@ Recovery note:
 
 ## 14. Operational habits that matter
 
+### Recent acquisition record
+- On 2026-09-27, `Toy Story 5` (TMDb 1084244) was added to Radarr as monitored with the existing `HD-1080p` quality profile and the standard movie root folder. Radarr's `MoviesSearch` command completed and placed a 1080p release in qBittorrent's queue.
+
 ### For oversized movie grabs
 Best cleanup flow:
 1. remove the oversized torrent from qB

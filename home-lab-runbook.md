@@ -601,6 +601,8 @@ On 2026-09-25, a manual `MissingSearch` command returned HTTP 500 (`Sequence con
 
 Sonarr 4.0.19.2979 accepted `MissingEpisodeSearch` normally for the full monitored missing-episode set.
 
+On 2026-09-26, an explicitly authorized manual grab bypassed Radarr's 3-seeder minimum for `Sal Vulcano Terrified (2024) 1080p WEBRip 5.1-LAMA` (1.3 GiB, 1 seeder) as a connectivity test. qBittorrent accepted the magnet and remained in `downloading metadata`; no global quality or seeder policy was changed.
+
 Known error path:
 - `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
 

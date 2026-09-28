@@ -598,6 +598,8 @@ Known error path:
 Per-movie searches do work.
 
 ### qB / Sonarr / Radarr handoff edge cases
+On 2026-09-27, every newly queued qBittorrent magnet, including `Toy Story 5 (2026)`, was stuck at `downloading metadata` with zero bytes transferred. Root cause: qBittorrent is bound to `wg0`, and its WireGuard peer's most recent handshake was 12.67 days old. Re-establish the tunnel, confirm a fresh handshake, then recheck torrent metadata before treating the release itself as unavailable.
+
 At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
 This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
 

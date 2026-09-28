@@ -603,6 +603,8 @@ Sonarr 4.0.19.2979 accepted `MissingEpisodeSearch` normally for the full monitor
 
 On 2026-09-26, an explicitly authorized manual grab bypassed Radarr's 3-seeder minimum for `Sal Vulcano Terrified (2024) 1080p WEBRip 5.1-LAMA` (1.3 GiB, 1 seeder) as a connectivity test. qBittorrent accepted the magnet and remained in `downloading metadata`; no global quality or seeder policy was changed.
 
+On 2026-09-27, every newly queued qBittorrent magnet, including `Toy Story 5 (2026)`, was stuck at `downloading metadata` with zero bytes transferred. Root cause: qBittorrent is bound to `wg0`, and its WireGuard peer's most recent handshake was 12.67 days old. The tunnel must be re-established before magnets can contact DHT/trackers/peers; confirm a fresh handshake after restarting the `vpn-qb` stack, then recheck torrent metadata before treating it as a release-availability problem.
+
 Known error path:
 - `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
 

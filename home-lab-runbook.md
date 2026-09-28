@@ -605,6 +605,8 @@ On 2026-09-26, an explicitly authorized manual grab bypassed Radarr's 3-seeder m
 
 On 2026-09-27, every newly queued qBittorrent magnet, including `Toy Story 5 (2026)`, was stuck at `downloading metadata` with zero bytes transferred. Root cause: qBittorrent is bound to `wg0`, and its WireGuard peer's most recent handshake was 12.67 days old. The tunnel must be re-established before magnets can contact DHT/trackers/peers; confirm a fresh handshake after restarting the `vpn-qb` stack, then recheck torrent metadata before treating it as a release-availability problem.
 
+Recovery verified: recreated the `wireguard-qb` and `qbittorrent` containers from `/home/cass/services/vpn-qb/docker-compose.yml`; the peer immediately established a fresh handshake and `Toy Story 5 (2026)` acquired metadata and entered `downloading`. Other old queue items can still be independently stalled when their particular release has no peers.
+
 Known error path:
 - `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
 

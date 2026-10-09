@@ -374,7 +374,9 @@ Notably, **no TV-specific 3D rule** was added.
 
 ### Radarr
 All movies were assigned to **Ultra-HD**.
-Current movie count at the time of writing: about **230**.
+Current movie count at the time of writing: **266**.
+
+On 2026-10-08, added and searched 24 Italian films in the requested preference order on the **Ultra-HD** profile. The first results included active grabs for `Perfect Strangers (2016)` and `The Great Beauty (2013)`; all titles remain monitored for later availability.
 
 Radarr custom-format scoring on Ultra-HD is intentionally biased toward compressed, Plex-friendlier releases:
 - **No 3D** = `-10000`

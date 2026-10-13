@@ -604,6 +604,8 @@ On 2026-09-27, every newly queued qBittorrent magnet, including `Toy Story 5 (20
 
 Recovery verified: recreated the `wireguard-qb` and `qbittorrent` containers from `/home/cass/services/vpn-qb/docker-compose.yml`; the peer immediately established a fresh handshake and `Toy Story 5 (2026)` acquired metadata and entered `downloading`. Other old queue items can still be independently stalled when their particular release has no peers.
 
+On 2026-10-13, `PAW Patrol: The Dino Movie (2026)` was stuck at metadata because the WireGuard handshake had again gone stale. With explicit authorization, recreated only `wireguard-qb` and `qbittorrent` using the VPN compose file. Both services came up, `wg0` established a fresh handshake, transfer counters increased, and qBittorrent opened peer connections. Radarr then reported the 2.15 GB release as actively downloading with no queue error; confirm Radarr import and Plex visibility separately before claiming it is in the library.
+
 At times a torrent can appear effectively complete but still sit in an in-between state before import cleanup finalizes.
 This is not always fatal, but it is something to watch when items seem stuck in “Moving” or “Downloading” with `sizeleft: 0`.
 

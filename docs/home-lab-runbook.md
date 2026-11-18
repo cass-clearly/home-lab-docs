@@ -595,6 +595,8 @@ Practical implication:
 - some queue hygiene may be easier in the UI than via automation
 
 ### Radarr bulk search bug
+On 2026-11-17, an explicitly authorized full-library `MissingEpisodeSearch` was submitted in Sonarr (command `789684`) for all 37 monitored series. At launch, Sonarr reported 3,035 missing monitored episodes and an existing queue of 611 items (472 queued). `Percy Jackson and the Olympians` is already monitored through Season 3; its first two Season 3 episodes are scheduled for 2026-11-20, so no release can be acquired before then. Confirm actual qBittorrent grabs separately after the global search completes.
+
 Known error path:
 - `Error occurred while executing task MoviesSearch: Value cannot be null. (Parameter 'source')`
 
